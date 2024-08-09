@@ -1,0 +1,6 @@
+framework module Pods_MedBookTests {
+  umbrella header "Pods-MedBookTests-umbrella.h"
+
+  export *
+  module * { export * }
+}

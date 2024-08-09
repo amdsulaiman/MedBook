@@ -1,0 +1,34 @@
+PODS:
+  - KRActivityIndicatorView (3.0.8)
+  - KRProgressHUD (3.4.8):
+    - KRActivityIndicatorView (= 3.0.8)
+  - ReachabilitySwift (5.2.3)
+  - SDWebImage (5.19.1):
+    - SDWebImage/Core (= 5.19.1)
+  - SDWebImage/Core (5.19.1)
+  - TweeTextField (1.6.4)
+
+DEPENDENCIES:
+  - KRProgressHUD
+  - ReachabilitySwift
+  - SDWebImage (~> 5.0)
+  - TweeTextField
+
+SPEC REPOS:
+  trunk:
+    - KRActivityIndicatorView
+    - KRProgressHUD
+    - ReachabilitySwift
+    - SDWebImage
+    - TweeTextField
+
+SPEC CHECKSUMS:
+  KRActivityIndicatorView: c5c503bf56e54834382dd926b64ff47287ca0006
+  KRProgressHUD: d0fb4e72428d312eb6966e84c543ea58fb1efbc7
+  ReachabilitySwift: 7f151ff156cea1481a8411701195ac6a984f4979
+  SDWebImage: 40b0b4053e36c660a764958bff99eed16610acbb
+  TweeTextField: 726de695eead9784f7ed02e22f6944bfcfcca07a
+
+PODFILE CHECKSUM: 1e77f1b77d645ccfa7c25c8c12768894cae3edf2
+
+COCOAPODS: 1.15.2
