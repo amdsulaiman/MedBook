@@ -7,6 +7,7 @@
 
 import UIKit
 import KRProgressHUD
+import CoreData
 
 enum SortOption {
     case title
@@ -36,20 +37,21 @@ class DashboardVC: UIViewController {
     var isLoading = false
     var query = ""
     var currentSortOption: SortOption = .title
-
+    var debounceTimer: Timer?
+    
     
     override func viewDidLoad() {
         super.viewDidLoad()
         setupUI()
         setupSearchBar()
         setupTableView()
+        setupTapGestureRecognizer()
         // Do any additional setup after loading the view.
     }
     
     
     
     private func setupUI() {
-        titleLabel.textColor = UIColor.black
         titleLabel.font = .metropolisBold(size: 22.0)
         titleLabel.text = Constants.StringConstants.medBook
         sortLabel.textColor = UIColor.black
@@ -75,7 +77,7 @@ class DashboardVC: UIViewController {
         filterTitleBtnRef.layer.cornerRadius = 8
         serachBgView.layer.cornerRadius = 8
         filterView.isHidden = true
-        self.baseView.addGestureRecognizer(UITapGestureRecognizer(target: self, action: #selector(dismissKeyboard)))
+        //        self.baseView.addGestureRecognizer(UITapGestureRecognizer(target: self, action: #selector(dismissKeyboard)))
     }
     
     private func setupSearchBar() {
@@ -113,7 +115,8 @@ class DashboardVC: UIViewController {
     
     func fetchBooks(query: String, offset: Int) {
         isLoading = true
-        NetworkHelper.shared.fetchBooks(query: query, limit: 10, offset: offset) { [weak self] books in
+        let encodedQuery = query.addingPercentEncoding(withAllowedCharacters: .urlQueryAllowed) ?? query
+        NetworkHelper.shared.fetchBooks(query: encodedQuery, limit: 10, offset: offset) { [weak self] books in
             DispatchQueue.main.async {
                 self?.filterView.isHidden = false
                 self?.books.append(contentsOf: books ?? [])
@@ -121,6 +124,7 @@ class DashboardVC: UIViewController {
                 self?.tableView.reloadData()
                 self?.isLoading = false
                 KRProgressHUD.dismiss()
+                self?.searchBar.resignFirstResponder()
             }
         }
     }
@@ -215,6 +219,12 @@ extension DashboardVC {
         
         selectedButton.backgroundColor = .systemGray3
     }
+    private func setupTapGestureRecognizer() {
+        let tapGesture = UITapGestureRecognizer(target: self, action: #selector(dismissKeyboard))
+        tapGesture.cancelsTouchesInView = false
+        view.addGestureRecognizer(tapGesture)
+    }
+    
 }
 
 // MARK: - UITableViewDelegate & UITableViewDataSource
@@ -244,7 +254,7 @@ extension DashboardVC: UITableViewDelegate, UITableViewDataSource {
     func tableView(_ tableView: UITableView, heightForRowAt indexPath: IndexPath) -> CGFloat {
         return 80
     }
-
+    
     
     func tableView(_ tableView: UITableView, willDisplay cell: UITableViewCell, forRowAt indexPath: IndexPath) {
         let lastElement = books.count - 1
@@ -257,41 +267,65 @@ extension DashboardVC: UITableViewDelegate, UITableViewDataSource {
     func tableView(_ tableView: UITableView, trailingSwipeActionsConfigurationForRowAt indexPath: IndexPath) -> UISwipeActionsConfiguration? {
         let book = books[indexPath.row]
         
+        let context = (UIApplication.shared.delegate as! AppDelegate).persistentContainer.viewContext
         let isBookmarked = CoreDataHelper.shared.checkIfBookmarked(book: book, userID: ValidationHelper.getCurrentUserID())
-        let actionTitle = isBookmarked ? "Bookmarked" : "Bookmark"
+        let bookmarkedItem = ValidationHelper().convertBookToBookmarkedItem(book: book)
         
-        let bookmarkAction = UIContextualAction(style: .normal, title: actionTitle) { [weak self] (action, view, completionHandler) in
-            if !isBookmarked {
-                CoreDataHelper.shared.addBookmark(book: book, userID: ValidationHelper.getCurrentUserID())
-                tableView.reloadRows(at: [indexPath], with: .automatic) // Update the cell UI
+        let bookmarkAction = UIContextualAction(style: .normal, title: isBookmarked ? "Remove Bookmark" : "Bookmark") { [weak self] (action, view, completionHandler) in
+            let userID = ValidationHelper.getCurrentUserID()
+            if isBookmarked {
+                // Remove bookmark
+                CoreDataHelper.shared.removeBookmark(book: bookmarkedItem, userID: userID)
+            } else {
+                // Add bookmark
+                CoreDataHelper.shared.addBookmark(book: book, userID: userID)
             }
+            // Update UI and completion
+            self?.tableView.reloadRows(at: [indexPath], with: .automatic)
             completionHandler(true)
         }
+        bookmarkAction.image = isBookmarked ?  UIImage(named: "") : UIImage(named: "")
         
-        bookmarkAction.backgroundColor = isBookmarked ? .gray : .green
         let configuration = UISwipeActionsConfiguration(actions: [bookmarkAction])
         return configuration
+    }
+    
+    
+    func tableView(_ tableView: UITableView, didSelectRowAt indexPath: IndexPath) {
+        let book = books[indexPath.row]
+        let isBookmarked = CoreDataHelper.shared.checkIfBookmarked(book: book, userID: ValidationHelper.getCurrentUserID())
+        let storyBoard = UIStoryboard(name: "Main", bundle: nil)
+        guard let viewController = storyBoard.instantiateViewController(withIdentifier: String(describing: "BookDetailsVC")) as? BookDetailsVC else { return }
+        viewController.modalPresentationStyle = .fullScreen
+        viewController.book = books[indexPath.row]
+        viewController.isBookMarked = isBookmarked
+        self.present(viewController, animated: false)
     }
     
 }
 
 extension DashboardVC: UISearchBarDelegate{
     func searchBar(_ searchBar: UISearchBar, textDidChange searchText: String) {
-        if searchText.count >= 3 {
-            query = searchText
-            currentOffset = 0
-            books.removeAll()
-            tableView.reloadData()
-            KRProgressHUD.show()
-            fetchBooks(query: query, offset: currentOffset)
-        } else if searchText.isEmpty {
-            filterView.isHidden = true
-            books.removeAll()
-            tableView.reloadData()
+        debounceTimer?.invalidate()
+        
+        debounceTimer = Timer.scheduledTimer(withTimeInterval: 0.5, repeats: false) { [weak self] _ in
+            guard let self = self else { return }
+            
+            if searchText.count >= 3 {
+                self.query = searchText
+                self.currentOffset = 0
+                self.books.removeAll()
+                self.tableView.reloadData()
+                KRProgressHUD.show()
+                self.fetchBooks(query: self.query, offset: self.currentOffset)
+            } else if searchText.isEmpty {
+                self.filterView.isHidden = true
+                self.books.removeAll()
+                self.tableView.reloadData()
+            }
         }
-    }
-    
-    func searchBarSearchButtonClicked(_ searchBar: UISearchBar) {
-        searchBar.resignFirstResponder()
+        func searchBarSearchButtonClicked(_ searchBar: UISearchBar) {
+            searchBar.resignFirstResponder()
+        }
     }
 }

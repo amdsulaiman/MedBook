@@ -11,7 +11,7 @@ import UIKit
 
 class CoreDataHelper {
     static let shared = CoreDataHelper()
-    
+    let context = (UIApplication.shared.delegate as! AppDelegate).persistentContainer.viewContext
     private init() {}
     
     func saveCountriesToCoreData(_ countries: [String: CountryData]) {
@@ -127,6 +127,7 @@ class CoreDataHelper {
         bookmarkedBook.ratingsAverage = "\(book.ratingsAverage ?? 0.0)"
         bookmarkedBook.ratingsCount = "\(book.ratingsCount ?? 0)"
         bookmarkedBook.userID = userID
+        bookmarkedBook.key = book.key
 
         do {
             try context.save()

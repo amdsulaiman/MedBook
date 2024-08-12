@@ -10,6 +10,7 @@ target 'MedBook' do
 pod 'ReachabilitySwift'
 pod 'SDWebImage', '~> 5.0'
 pod 'KRProgressHUD'
+pod 'MBRadioCheckboxButton'
 
   target 'MedBookTests' do
     inherit! :search_paths

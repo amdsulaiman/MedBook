@@ -41,4 +41,14 @@ struct ValidationHelper {
         return UserDefaults.standard.string(forKey: "UserID") ?? ""
     }
     
+    func convertBookToBookmarkedItem(book: Book) -> BookmarkedItem {
+        let bookmarkedItem = BookmarkedItem(context: CoreDataHelper.shared.context)
+        bookmarkedItem.title = book.title
+        bookmarkedItem.ratingsAverage = book.ratingsAverage.map { String($0) }
+        bookmarkedItem.ratingsCount = book.ratingsCount.map { String($0) }
+        bookmarkedItem.cover_i = book.coverI.map { String($0) }
+        bookmarkedItem.author_name = book.authorName?.first // Assuming you store the first author name
+        
+        return bookmarkedItem
+    }
 }

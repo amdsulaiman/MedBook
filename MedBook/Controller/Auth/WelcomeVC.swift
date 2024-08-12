@@ -27,7 +27,6 @@ class WelcomeVC: UIViewController {
         // Do any additional setup after loading the view.
     }
     
-    
     // MARK: - Methods
     private func setupUI() {
         titleLabel.font = .metropolisBold(size: 22.0)

@@ -18,10 +18,13 @@ class BookMarkVC: UIViewController {
     
     override func viewDidLoad() {
         super.viewDidLoad()
+        
+        // Do any additional setup after loading the view.
+    }
+    override func viewWillAppear(_ animated: Bool) {
         fetchBookmarks()
         setupUI()
         setupTableView()
-        // Do any additional setup after loading the view.
     }
     private func setupUI() {
         titleLabel.textColor = UIColor.black
@@ -86,5 +89,31 @@ extension BookMarkVC : UITableViewDelegate, UITableViewDataSource {
         bookmarkedBooks.remove(at: indexPath.row)
         tableView.deleteRows(at: [indexPath], with: .automatic)
     }
-    
+    func tableView(_ tableView: UITableView, didSelectRowAt indexPath: IndexPath) {
+        let bookmarkedBook = bookmarkedBooks[indexPath.row]
+        let authorNameArray: [String]? = {
+            if let authorName = bookmarkedBook.author_name {
+                return [authorName]
+            } else {
+                return nil
+            }
+        }()
+        let books = Book(
+            title: bookmarkedBook.title,
+            ratingsAverage: Double(bookmarkedBook.ratingsAverage!),
+            ratingsCount: Int(bookmarkedBook.ratingsCount!),
+            authorName: authorNameArray,
+            coverI: Int(bookmarkedBook.cover_i!),
+            key: bookmarkedBook.key
+        )
+
+        let isBookmarked = CoreDataHelper.shared.checkIfBookmarked(book: books, userID: ValidationHelper.getCurrentUserID())
+        let storyBoard = UIStoryboard(name: "Main", bundle: nil)
+        guard let viewController = storyBoard.instantiateViewController(withIdentifier: String(describing: "BookDetailsVC")) as? BookDetailsVC else { return }
+        viewController.modalPresentationStyle = .fullScreen
+        viewController.book = books
+        viewController.isBookMarked = isBookmarked
+        self.present(viewController, animated: false)
+    }
 }
+

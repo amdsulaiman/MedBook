@@ -18,6 +18,9 @@ class LoginVC: UIViewController {
     @IBOutlet weak var passwordText: TweeAttributedTextField!
     @IBOutlet weak var loginBgView: UIView!
     @IBOutlet weak var loginBtnRef: UIButton!
+    @IBOutlet weak var passwordBtnRef: UIButton!
+    
+    var isPasswordSecured = false
     
     override func viewDidLoad() {
         super.viewDidLoad()
@@ -45,25 +48,29 @@ class LoginVC: UIViewController {
         self.emailText.addTarget(self, action: #selector(self.textFieldDidChange(textField:)), for: UIControl.Event.editingChanged)
         self.emailText.addTarget(self, action: #selector(self.emailEndEditing(_:)), for: .editingDidEnd)
         self.baseView.addGestureRecognizer(UITapGestureRecognizer(target: self, action: #selector(dismissKeyboard)))
+        self.passwordBtnRef.setImage(UIImage(named: "hide"), for: .normal)
+        self.passwordText.isSecureTextEntry = true
+        self.passwordText.addTarget(self, action: #selector(passwordTextDidChange(_:)), for: .editingChanged)
+        loginBtnRef.isEnabled = false
     }
     func validate() {
-        if let name = self.emailText?.text, let email = self.emailText?.text, email.isValidEmail, name.isValidName {
-            loginBtnRef.isEnabled = true
-        } else {
+        guard let email = emailText.text, email.isValidEmail,
+              let password = passwordText.text, !password.isEmpty else {
             loginBtnRef.isEnabled = false
+            return
         }
+        loginBtnRef.isEnabled = true
     }
+    
     private func validateInputs() -> Bool {
         guard let email = emailText.text, email.isValidEmail else {
-            emailText.showInfo("Please enter a valid email address.")
+            emailText.hideInfo()
             return false
         }
         
-        if let password = passwordText.text {
-            if let errorMessage = ValidationHelper.validatePassword(password) {
-                passwordText.showInfo(errorMessage)
-                return false
-            }
+        guard let password = passwordText.text, !password.isEmpty else {
+            passwordText.hideInfo()
+            return false
         }
         
         return true
@@ -77,23 +84,20 @@ class LoginVC: UIViewController {
         self.view.endEditing(true)
     }
     
+    
     // MARK: - Actions
     @IBAction func dismissBtnAction(_ sender: UIButton) {
         self.dismiss(animated: true)
     }
     
     @IBAction func loginBtnAction(_ sender: UIButton) {
-        guard let email = emailText.text, !email.isEmpty,
-              let password = passwordText.text, !password.isEmpty else {
-            return
-        }
-        if validateInputs() {
-            if let user = CoreDataHelper.shared.fetchUser(email: email, password: password) {
-                UserDefaults.standard.setValue(email, forKey: "UserID")
-                ValidationHelper.moveToDashboard()
-            } else {
-                showLoginError()
-            }
+        guard validateInputs() else { return }
+        
+        if let user = CoreDataHelper.shared.fetchUser(email: emailText.text!, password: passwordText.text!) {
+            UserDefaults.standard.setValue(emailText.text!, forKey: "UserID")
+            ValidationHelper.moveToDashboard()
+        } else {
+            showLoginError()
         }
     }
     
@@ -112,7 +116,7 @@ class LoginVC: UIViewController {
             return
         }
         sender.lineColor = .red
-        sender.showInfo("Please enter a valid email address.")
+        sender.hideInfo()
     }
     
     @IBAction private func passwordBeginEditing(_ sender: TweeAttributedTextField) {
@@ -122,13 +126,30 @@ class LoginVC: UIViewController {
     
     @IBAction private func passwordEndEditing(_ sender: TweeAttributedTextField) {
         if let passwordText = sender.text, let errorMessage = ValidationHelper.validatePassword(passwordText) {
-            sender.lineColor = .red
-            sender.showInfo(errorMessage)
+            sender.hideInfo()
         } else {
             sender.lineColor = UIColor(named: "underlineColor") ?? .lightGray
             sender.hideInfo()
         }
     }
+    
+    @IBAction func passwordBtnAction(_ sender: UIButton) {
+        if isPasswordSecured {
+            passwordText.isSecureTextEntry = false
+            self.passwordBtnRef.setImage(UIImage(named: "view"), for: .normal)
+        } else {
+            passwordText.isSecureTextEntry = true
+            self.passwordBtnRef.setImage(UIImage(named: "hide"), for: .normal)
+        }
+        isPasswordSecured = !isPasswordSecured
+    }
+    
+    @objc func passwordTextDidChange(_ textField: UITextField) {
+        if let password = textField.text {
+            validate()
+        }
+    }
+    
 }
 extension LoginVC: UITextFieldDelegate {
     

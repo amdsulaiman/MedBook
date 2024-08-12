@@ -14,6 +14,7 @@ class AppDelegate: UIResponder, UIApplicationDelegate {
 
 
     func application(_ application: UIApplication, didFinishLaunchingWithOptions launchOptions: [UIApplication.LaunchOptionsKey: Any]?) -> Bool {
+        Theme.current.apply()
         fetchCountriesIfNeeded()
         NetworkHelper.shared.fetchUserCountryByIP()
         return true

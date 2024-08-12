@@ -8,6 +8,7 @@
 import UIKit
 import TweeTextField
 import Reachability
+import MBRadioCheckboxButton
 
 class SignupVC: UIViewController {
     
@@ -20,8 +21,16 @@ class SignupVC: UIViewController {
     @IBOutlet weak var countryPicker: UIPickerView!
     @IBOutlet weak var continueBgView: UIView!
     @IBOutlet weak var continueBtnRef: UIButton!
+    @IBOutlet weak var passwordRefBtn: UIButton!
+    @IBOutlet weak var check1BtnRef: CheckboxButton!
+    @IBOutlet weak var check2BtnRef: CheckboxButton!
+    @IBOutlet weak var check3BtnRef: CheckboxButton!
+    @IBOutlet weak var condition1Label: UILabel!
+    @IBOutlet weak var condition2Label: UILabel!
+    @IBOutlet weak var condition3Label: UILabel!
     
     var countries = [Country]()
+    var isPasswordSecured = false
     
     override func viewDidLoad() {
         super.viewDidLoad()
@@ -45,9 +54,27 @@ class SignupVC: UIViewController {
         continueBgView.layer.cornerRadius = 8
         continueBgView.layer.borderWidth = 1.0
         continueBgView.layer.borderColor = UIColor.black.cgColor
-        self.emailText.addTarget(self, action: #selector(self.textFieldDidChange(textField:)), for: UIControl.Event.editingChanged)
         self.emailText.addTarget(self, action: #selector(self.emailEndEditing(_:)), for: .editingDidEnd)
         self.baseView.addGestureRecognizer(UITapGestureRecognizer(target: self, action: #selector(dismissKeyboard)))
+        self.passwordRefBtn.setImage(UIImage(named: "hide"), for: .normal)
+        self.passwordText.isSecureTextEntry = true
+        condition1Label.textColor = UIColor.black
+        condition1Label.font = .metropolisRegular(size: 15)
+        condition2Label.textColor = UIColor.black
+        condition2Label.font = .metropolisRegular(size: 15)
+        condition3Label.textColor = UIColor.black
+        condition3Label.font = .metropolisRegular(size: 15)
+        check1BtnRef.isSelected = false
+        check2BtnRef.isSelected = false
+        check3BtnRef.isSelected = false
+        continueBtnRef.isEnabled = false
+        check1BtnRef.isUserInteractionEnabled = false
+        check2BtnRef.isUserInteractionEnabled = false
+        check3BtnRef.isUserInteractionEnabled = false
+        condition1Label.text = Constants.StringConstants.conditionText1
+        condition2Label.text = Constants.StringConstants.conditionText2
+        condition3Label.text = Constants.StringConstants.conditionText3
+        passwordText.addTarget(self, action: #selector(passwordTextDidChange(_:)), for: .editingChanged)
     }
     
     private func loadData() {
@@ -69,30 +96,22 @@ class SignupVC: UIViewController {
     }
     
     
-    func validate() {
-        if let name = self.emailText?.text, let email = self.emailText?.text, email.isValidEmail, name.isValidName {
-            continueBtnRef.isEnabled = true
-        } else {
-            continueBtnRef.isEnabled = false
-        }
+    private func validatePassword(_ password: String) {
+        let isAtLeast8Characters = password.count >= 8
+        let hasUppercase = password.range(of: "[A-Z]", options: .regularExpression) != nil
+        let hasSpecialCharacter = password.range(of: "[!@#$%^&*(),.?\":{}|<>]", options: .regularExpression) != nil
+        
+        // Update checkboxes based on conditions
+        check1BtnRef.isOn = isAtLeast8Characters
+        check2BtnRef.isOn = hasUppercase
+        check3BtnRef.isOn = hasSpecialCharacter
+        
+        continueBtnRef.isEnabled = isAtLeast8Characters && hasUppercase && hasSpecialCharacter
     }
-    
-    
-    
-    private func validateInputs() -> Bool {
-        guard let email = emailText.text, email.isValidEmail else {
-            emailText.showInfo("Please enter a valid email address.")
-            return false
+    @objc func passwordTextDidChange(_ textField: UITextField) {
+        if let password = textField.text {
+            validatePassword(password)
         }
-        
-        if let password = passwordText.text {
-            if let errorMessage = ValidationHelper.validatePassword(password) {
-                passwordText.showInfo(errorMessage)
-                return false
-            }
-        }
-        
-        return true
     }
     
     private func saveUserData() {
@@ -154,9 +173,7 @@ class SignupVC: UIViewController {
     }
     
     @IBAction func continueBtnAction(_ sender: UIButton) {
-        if validateInputs() {
-            saveUserData()
-        }
+        saveUserData()
     }
     @IBAction private func emailBeginEditing(_ sender: TweeAttributedTextField) {
         sender.lineColor = UIColor(named: "underlineColor") ?? .lightGray
@@ -173,7 +190,7 @@ class SignupVC: UIViewController {
             return
         }
         sender.lineColor = .red
-        sender.showInfo("Please enter a valid email address.")
+        sender.hideInfo()
     }
     
     @IBAction private func passwordBeginEditing(_ sender: TweeAttributedTextField) {
@@ -184,21 +201,37 @@ class SignupVC: UIViewController {
     @IBAction private func passwordEndEditing(_ sender: TweeAttributedTextField) {
         if let passwordText = sender.text, let errorMessage = ValidationHelper.validatePassword(passwordText) {
             sender.lineColor = .red
-            sender.showInfo(errorMessage)
+            sender.hideInfo()
         } else {
             sender.lineColor = UIColor(named: "underlineColor") ?? .lightGray
             sender.hideInfo()
         }
     }
     
-}
-extension SignupVC: UITextFieldDelegate {
-    
-    @objc func textFieldDidChange(textField: UITextField) {
-        print(#function)
-        self.validate()
+    @IBAction func passwordBtnAction(_ sender: UIButton) {
+        if isPasswordSecured {
+            passwordText.isSecureTextEntry = false
+            self.passwordRefBtn.setImage(UIImage(named: "view"), for: .normal)
+        } else {
+            passwordText.isSecureTextEntry = true
+            self.passwordRefBtn.setImage(UIImage(named: "hide"), for: .normal)
+        }
+        isPasswordSecured = !isPasswordSecured
     }
+    
+    @IBAction func check1BtnAction(_ sender: CheckboxButton) {
+    }
+    
+    @IBAction func check2BtnAction(_ sender: CheckboxButton) {
+    }
+    
+    
+    @IBAction func check3BtnAction(_ sender: CheckboxButton) {
+    }
+    
+    
 }
+
 extension String {
     
     var isValidEmail: Bool {

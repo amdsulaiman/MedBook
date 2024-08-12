@@ -2,7 +2,7 @@
 //  BookmarkedItem+CoreDataProperties.swift
 //  
 //
-//  Created by Mohammed Sulaiman on 09/08/24.
+//  Created by Mohammed Sulaiman on 10/08/24.
 //
 //
 
@@ -16,10 +16,12 @@ extension BookmarkedItem {
         return NSFetchRequest<BookmarkedItem>(entityName: "BookmarkedItem")
     }
 
-    @NSManaged public var title: String?
+    @NSManaged public var author_name: String?
+    @NSManaged public var cover_i: String?
     @NSManaged public var ratingsAverage: String?
     @NSManaged public var ratingsCount: String?
-    @NSManaged public var cover_i: String?
-    @NSManaged public var author_name: String?
+    @NSManaged public var title: String?
+    @NSManaged public var userID: String?
+    @NSManaged public var key: String?
 
 }

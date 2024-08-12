@@ -3,6 +3,7 @@
     <entity name="BookmarkedItem" representedClassName="BookmarkedItem" syncable="YES" codeGenerationType="class">
         <attribute name="author_name" optional="YES" attributeType="String"/>
         <attribute name="cover_i" optional="YES" attributeType="String"/>
+        <attribute name="key" optional="YES" attributeType="String"/>
         <attribute name="ratingsAverage" optional="YES" attributeType="String"/>
         <attribute name="ratingsCount" optional="YES" attributeType="String"/>
         <attribute name="title" optional="YES" attributeType="String"/>

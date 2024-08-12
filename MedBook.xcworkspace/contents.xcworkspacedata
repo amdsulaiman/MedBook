@@ -2,10 +2,10 @@
 <Workspace
    version = "1.0">
    <FileRef
-      location = "group:BookmarkedItem+CoreDataClass.swift">
+      location = "group:BookmarkedItem+CoreDataProperties.swift">
    </FileRef>
    <FileRef
-      location = "group:BookmarkedItem+CoreDataProperties.swift">
+      location = "group:BookmarkedItem+CoreDataClass.swift">
    </FileRef>
    <FileRef
       location = "group:User+CoreDataClass.swift">
